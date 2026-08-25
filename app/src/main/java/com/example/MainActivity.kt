@@ -1,11 +1,17 @@
 package com.example
 
-import android.app.Activity
 import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import com.example.ui.MainScreen
 
-class MainActivity : Activity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        finish()
+        enableEdgeToEdge()
+        setContent {
+            MainScreen()
+        }
     }
 }
