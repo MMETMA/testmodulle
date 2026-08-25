@@ -160,7 +160,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             HookLogEntry(
                 timestamp = sdf.format(Date(now.time - 1500)),
                 level = "INFO",
-                message = "Hook rule: Override sput-boolean v0 in <clinit>()V to constant 0x1 (true)"
+                message = "Hook rule: Override sput-boolean v0 in <clinit>()V to constant 0x0 (false)"
             )
         )
 

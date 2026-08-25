@@ -9,19 +9,21 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage
 
 /**
  * LSPosed / Xposed hook entry point.
- * Forces com.miui.systemui.notification.NotificationSettingsManager.USE_WHITE_LISTS to always be true (1).
+ * Exclusively hooks com.android.systemui to force
+ * com.miui.systemui.notification.NotificationSettingsManager.USE_WHITE_LISTS to false (0).
  */
 class MainHook : IXposedHookLoadPackage {
 
     companion object {
         private const val TAG = "[MIUI-Notification-Whitelist]"
+        private const val TARGET_PACKAGE = "com.android.systemui"
         private const val TARGET_CLASS = "com.miui.systemui.notification.NotificationSettingsManager"
         private const val TARGET_FIELD = "USE_WHITE_LISTS"
         private const val CONFIG_CLASS = "com.miui.utils.configs.MiuiConfigs"
     }
 
     override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        // 1. Self-activation detection hook for our UI
+        // 1. Self-activation detection hook for our UI app
         if (lpparam.packageName == "com.aistudio.miuiwhitelist.hook" ||
             lpparam.packageName == "com.example"
         ) {
@@ -41,18 +43,15 @@ class MainHook : IXposedHookLoadPackage {
             return
         }
 
-        // 2. Target MIUI / HyperOS SystemUI and System Framework
-        if (lpparam.packageName == "com.android.systemui" ||
-            lpparam.packageName == "com.miui.systemui" ||
-            lpparam.packageName == "android"
-        ) {
+        // 2. Target ONLY com.android.systemui
+        if (lpparam.packageName == TARGET_PACKAGE) {
             hookSystemUiNotificationSettings(lpparam)
         }
     }
 
     private fun hookSystemUiNotificationSettings(lpparam: XC_LoadPackage.LoadPackageParam) {
         try {
-            XposedBridge.log("$TAG Initializing hook for package: ${lpparam.packageName}")
+            XposedBridge.log("$TAG Initializing hook exclusively for package: ${lpparam.packageName}")
 
             // Hook direct class if currently in class loader
             val notifManagerClass = XposedHelpers.findClassIfExists(TARGET_CLASS, lpparam.classLoader)
@@ -98,29 +97,58 @@ class MainHook : IXposedHookLoadPackage {
 
     private fun applyNotificationSettingsOverride(clazz: Class<*>, classLoader: ClassLoader) {
         try {
-            // 1. Force the static boolean field USE_WHITE_LISTS to true (1)
+            // 1. Force the static boolean/int field USE_WHITE_LISTS to false (0)
             try {
                 val field = clazz.getDeclaredField(TARGET_FIELD)
                 field.isAccessible = true
-                XposedHelpers.setStaticBooleanField(clazz, TARGET_FIELD, true)
-                XposedBridge.log("$TAG [SUCCESS] Force-set $TARGET_CLASS.$TARGET_FIELD = true (1)")
+                XposedHelpers.setStaticBooleanField(clazz, TARGET_FIELD, false)
+                XposedBridge.log("$TAG [SUCCESS] Force-set $TARGET_CLASS.$TARGET_FIELD = false (0)")
             } catch (fnf: NoSuchFieldException) {
                 XposedBridge.log("$TAG Attempting fallback static field set for $TARGET_FIELD")
-                XposedHelpers.setStaticBooleanField(clazz, TARGET_FIELD, true)
+                try {
+                    XposedHelpers.setStaticBooleanField(clazz, TARGET_FIELD, false)
+                } catch (_: Throwable) {
+                    try {
+                        XposedHelpers.setStaticIntField(clazz, TARGET_FIELD, 0)
+                    } catch (_: Throwable) {}
+                }
             }
 
-            // 2. Hook all constructors to ensure instance creation maintains USE_WHITE_LISTS = true
+            // 2. Hook all constructors to ensure instance creation maintains USE_WHITE_LISTS = false
             XposedBridge.hookAllConstructors(clazz, object : XC_MethodHook() {
                 override fun afterHookedMethod(param: MethodHookParam) {
                     try {
-                        XposedHelpers.setStaticBooleanField(clazz, TARGET_FIELD, true)
+                        XposedHelpers.setStaticBooleanField(clazz, TARGET_FIELD, false)
                     } catch (t: Throwable) {
-                        XposedBridge.log("$TAG Constructor hook warning: ${t.message}")
+                        try {
+                            XposedHelpers.setStaticIntField(clazz, TARGET_FIELD, 0)
+                        } catch (_: Throwable) {}
                     }
                 }
             })
 
-            // 3. Hook all declared methods in NotificationSettingsManager that reference whitelist
+            // 3. Hook all declared methods in NotificationSettingsManager that query whitelist
+            val booleanMethodsToOverride = listOf(
+                "canUseWhiteList",
+                "isUseWhiteLists",
+                "isWhiteListEnabled",
+                "useWhiteLists",
+                "isWhiteListNotification"
+            )
+
+            booleanMethodsToOverride.forEach { methodName ->
+                try {
+                    XposedHelpers.findAndHookMethod(
+                        clazz,
+                        methodName,
+                        XC_MethodReplacement.returnConstant(false)
+                    )
+                    XposedBridge.log("$TAG [SUCCESS] Hooked $methodName() -> Forced return false")
+                } catch (_: Throwable) {
+                    // Method may not exist on this specific ROM build
+                }
+            }
+
             clazz.declaredMethods.forEach { method ->
                 val name = method.name.lowercase()
                 if (name.contains("whitelist") || name.contains("init") || name.contains("update") || name.contains("setting")) {
@@ -128,8 +156,11 @@ class MainHook : IXposedHookLoadPackage {
                         XposedBridge.hookMethod(method, object : XC_MethodHook() {
                             override fun afterHookedMethod(param: MethodHookParam) {
                                 try {
-                                    XposedHelpers.setStaticBooleanField(clazz, TARGET_FIELD, true)
+                                    XposedHelpers.setStaticBooleanField(clazz, TARGET_FIELD, false)
                                 } catch (_: Throwable) {
+                                    try {
+                                        XposedHelpers.setStaticIntField(clazz, TARGET_FIELD, 0)
+                                    } catch (_: Throwable) {}
                                 }
                             }
                         })
@@ -138,7 +169,7 @@ class MainHook : IXposedHookLoadPackage {
                 }
             }
 
-            XposedBridge.log("$TAG Overrides and hooks successfully applied to $TARGET_CLASS")
+            XposedBridge.log("$TAG Overrides and hooks successfully applied to $TARGET_CLASS (USE_WHITE_LISTS = false)")
 
         } catch (t: Throwable) {
             XposedBridge.log("$TAG Error applying override to $TARGET_CLASS: ${t.message}")

@@ -135,7 +135,7 @@ fun StatusHeader(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (isModuleActive) "ACTIVE (1)" else "SETUP REQ",
+                            text = if (isModuleActive) "ACTIVE (0/false)" else "SETUP REQ",
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (isModuleActive) CyberSuccess else CyberTertiary
@@ -200,7 +200,7 @@ fun StatusHeader(
                             border = androidx.compose.foundation.BorderStroke(1.dp, CyberSuccess.copy(alpha = 0.4f))
                         ) {
                             Text(
-                                text = "USE_WHITE_LISTS = 1 (true)",
+                                text = "USE_WHITE_LISTS = 0 (false)",
                                 fontFamily = FontFamily.Monospace,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,

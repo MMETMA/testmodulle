@@ -115,8 +115,8 @@ private const val PATCHED_SMALI = """.method static constructor <clinit>()V
     .line 3
     sput-boolean v0, Lcom/miui/systemui/notification/NotificationSettingsManager;->DEBUG:Z
 
-    # [HOOK OVERRIDE]: Forced USE_WHITE_LISTS to always be 1 (true)
-    const/4 v0, 0x1
+    # [HOOK OVERRIDE]: Forced USE_WHITE_LISTS to always be 0 (false)
+    const/4 v0, 0x0
 
     sput-boolean v0, Lcom/miui/systemui/notification/NotificationSettingsManager;->USE_WHITE_LISTS:Z
 
@@ -124,21 +124,13 @@ private const val PATCHED_SMALI = """.method static constructor <clinit>()V
 .end method"""
 
 private const val XPOSED_KOTLIN_HOOK = """// LSPosed / Xposed Hook Implementation
-XposedHelpers.findAndHookMethod(
-    "android.app.Application",
-    lpparam.classLoader,
-    "onCreate",
-    object : XC_MethodHook() {
-        override fun afterHookedMethod(param: MethodHookParam) {
-            val clazz = XposedHelpers.findClass(
-                "com.miui.systemui.notification.NotificationSettingsManager",
-                lpparam.classLoader
-            )
-            // Force USE_WHITE_LISTS = true (1)
-            XposedHelpers.setStaticBooleanField(clazz, "USE_WHITE_LISTS", true)
-        }
-    }
-)"""
+// Exclusively targets com.android.systemui
+val clazz = XposedHelpers.findClass(
+    "com.miui.systemui.notification.NotificationSettingsManager",
+    lpparam.classLoader
+)
+// Force USE_WHITE_LISTS = false (0)
+XposedHelpers.setStaticBooleanField(clazz, "USE_WHITE_LISTS", false)"""
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -398,8 +390,8 @@ fun OverviewTab(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     SettingToggleItem(
-                        title = "Force USE_WHITE_LISTS = 1",
-                        description = "Enforces NotificationSettingsManager.USE_WHITE_LISTS = true upon SystemUI startup",
+                        title = "Force USE_WHITE_LISTS = 0 (false)",
+                        description = "Enforces NotificationSettingsManager.USE_WHITE_LISTS = false upon SystemUI startup",
                         checked = uiState.preferences.isHookEnabled,
                         onCheckedChange = { viewModel.toggleHook(it) }
                     )
@@ -408,7 +400,7 @@ fun OverviewTab(
 
                     SettingToggleItem(
                         title = "Aggressive Multi-Point Enforcement",
-                        description = "Re-applies whitelist = 1 during constructor calls and notification update events",
+                        description = "Re-applies whitelist = false (0) during constructor calls and notification update events",
                         checked = uiState.preferences.isAggressiveMode,
                         onCheckedChange = { viewModel.toggleAggressiveMode(it) }
                     )
@@ -417,7 +409,7 @@ fun OverviewTab(
 
                     SettingToggleItem(
                         title = "Hook on Constructor (<init>)",
-                        description = "Hooks all constructor instances of NotificationSettingsManager",
+                        description = "Hooks all constructor instances of NotificationSettingsManager to keep USE_WHITE_LISTS = false",
                         checked = uiState.preferences.hookOnConstructor,
                         onCheckedChange = { viewModel.toggleHookOnConstructor(it) }
                     )
@@ -461,11 +453,7 @@ fun OverviewTab(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    ScopeItem(name = "com.android.systemui", desc = "Primary SystemUI Process (Notification Center & Status Bar)", isPrimary = true)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    ScopeItem(name = "com.miui.systemui", desc = "Xiaomi MIUI SystemUI Plugin Framework", isPrimary = false)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    ScopeItem(name = "android (system_server)", desc = "Android System Framework & Notification Manager Service", isPrimary = false)
+                    ScopeItem(name = "com.android.systemui", desc = "Primary SystemUI Process (Target Scope)", isPrimary = true)
                 }
             }
         }
@@ -576,7 +564,7 @@ fun SmaliCodeTab() {
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "In MIUI/HyperOS, NotificationSettingsManager.<clinit>() sets USE_WHITE_LISTS by inverting IS_INTERNATIONAL_BUILD (xor-int/lit8 v0, v0, 0x1). On International builds, this turns off whitelist management. This module hooks the class initialization to force USE_WHITE_LISTS = 1 (true) consistently.",
+                        text = "In MIUI/HyperOS, NotificationSettingsManager.<clinit>() sets USE_WHITE_LISTS based on ROM configuration. This module hooks the class initialization in com.android.systemui to force USE_WHITE_LISTS = false (0) consistently, matching: sput-boolean v0, Lcom/miui/systemui/notification/NotificationSettingsManager;->USE_WHITE_LISTS:Z with v0 = 0.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = 18.sp
@@ -596,7 +584,7 @@ fun SmaliCodeTab() {
 
         item {
             SmaliCodeCard(
-                title = "Patched Logic (USE_WHITE_LISTS = 1)",
+                title = "Patched Logic (USE_WHITE_LISTS = 0 / false)",
                 subtitle = "Target bytecode behavior injected by Hook",
                 code = PATCHED_SMALI,
                 isPatched = true
@@ -632,7 +620,7 @@ fun SetupGuideTab(uiState: MainUiState) {
         GuideStep(
             number = 3,
             title = "Check Target Scope",
-            description = "Ensure 'System Framework' (android) and 'System UI' (com.android.systemui) are selected in the module scope checklist.",
+            description = "Ensure 'System UI' (com.android.systemui) is selected in the module scope checklist in LSPosed.",
             icon = Icons.Default.Layers
         ),
         GuideStep(

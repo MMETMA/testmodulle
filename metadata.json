@@ -1,6 +1,6 @@
 {
   "name": "MIUI Whitelist Enabler",
-  "description": "LSPosed module to force NotificationSettingsManager.USE_WHITE_LISTS to always be 1 (true) in MIUI and HyperOS SystemUI.",
+  "description": "LSPosed module to force NotificationSettingsManager.USE_WHITE_LISTS to always be 0 (false) in MIUI and HyperOS SystemUI.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

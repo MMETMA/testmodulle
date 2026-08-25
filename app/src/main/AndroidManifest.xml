@@ -18,7 +18,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="Forces MIUI/HyperOS NotificationSettingsManager.USE_WHITE_LISTS to always be 1 (true)." />
+            android:value="Forces MIUI/HyperOS SystemUI NotificationSettingsManager.USE_WHITE_LISTS to always be false (0)." />
         <meta-data
             android:name="xposedminversion"
             android:value="54" />
