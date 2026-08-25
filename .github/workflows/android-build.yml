@@ -34,11 +34,14 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Prepare Debug Keystore
+      - name: Prepare Debug Keystore & Environment
         run: |
-          if [ ! -f debug.keystore ] && [ -f debug.keystore.base64 ]; then
+          if [ -f debug.keystore.base64 ]; then
             echo "Restoring debug.keystore from base64..."
             base64 -d debug.keystore.base64 > debug.keystore
+          fi
+          if [ ! -f .env ]; then
+            touch .env
           fi
 
       - name: Build Debug APK with Gradle
@@ -47,18 +50,10 @@ jobs:
           GRADLE_OPTS: "-Djava.awt.headless=true -Dorg.gradle.jvmargs=-Xmx2048m"
         run: gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Locate Generated APK
-        id: apk_locator
-        run: |
-          echo "Listing generated APKs..."
-          find app/build/outputs/apk/ -type f -name "*.apk"
-          APK_FILE=$(find app/build/outputs/apk/debug/ -type f -name "*.apk" | head -n 1)
-          echo "apk_path=$APK_FILE" >> $GITHUB_OUTPUT
-
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MIUI-Whitelist-Enabler-Debug-APK
-          path: ${{ steps.apk_locator.outputs.apk_path }}
+          path: app/build/outputs/apk/debug/*.apk
           retention-days: 30
           if-no-files-found: error
