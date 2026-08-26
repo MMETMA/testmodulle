@@ -34,27 +34,28 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Prepare Debug Keystore and Environment
+      - name: Prepare Fixed Keystore and Environment
         run: |
-          if [ -f debug.keystore.base64 ]; then
-            echo "Found debug.keystore.base64, decoding..."
+          if [ ! -f debug.keystore ] && [ -f keystore.jks ]; then
+            cp keystore.jks debug.keystore
+          elif [ ! -f debug.keystore ] && [ -f app/keystore.jks ]; then
+            cp app/keystore.jks debug.keystore
+          elif [ ! -f debug.keystore ] && [ -f debug.keystore.base64 ]; then
+            echo "Decoding persistent keystore from base64..."
             base64 -d debug.keystore.base64 > debug.keystore
           fi
           
-          if [ ! -f debug.keystore ]; then
-            echo "debug.keystore not found, generating standard debug keystore..."
-            keytool -genkey -v -keystore debug.keystore \
-              -storepass android -alias androiddebugkey -keypass android \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=Android Debug,O=Android,C=US"
-          fi
+          # Ensure keystore.jks and debug.keystore are present in both root and app directory
+          cp -f debug.keystore keystore.jks 2>/dev/null || true
+          cp -f debug.keystore app/keystore.jks 2>/dev/null || true
+          cp -f debug.keystore app/debug.keystore 2>/dev/null || true
 
           if [ ! -f .env ]; then
             touch .env
           fi
 
-          echo "Verifying debug.keystore exists at workspace root:"
-          ls -la debug.keystore
+          echo "Verifying persistent signing keystore SHA-256 fingerprint:"
+          keytool -list -v -keystore debug.keystore -storepass android | grep -E "SHA256|Owner"
 
       - name: Build Debug APK with Gradle
         env:
