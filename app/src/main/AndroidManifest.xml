@@ -14,7 +14,8 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="Fix muted notifications on HyperOS CN rom" />
+            android:value="Fix muted notifications on HyperOS CN rom
+            by: @MMETMAmods" />
         <meta-data
             android:name="xposedminversion"
             android:value="54" />
