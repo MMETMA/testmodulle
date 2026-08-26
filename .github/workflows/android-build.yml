@@ -38,16 +38,7 @@ jobs:
         run: |
           if [ -f debug.keystore.base64 ]; then
             base64 -d debug.keystore.base64 > debug.keystore
-          elif [ -f keystore.jks ]; then
-            cp keystore.jks debug.keystore
-          elif [ -f app/keystore.jks ]; then
-            cp app/keystore.jks debug.keystore
           fi
-          
-          # Mirror keystore across root and app module directories
-          cp -f debug.keystore keystore.jks 2>/dev/null || true
-          cp -f debug.keystore app/keystore.jks 2>/dev/null || true
-          cp -f debug.keystore app/debug.keystore 2>/dev/null || true
 
           if [ ! -f .env ]; then
             touch .env

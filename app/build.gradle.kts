@@ -10,20 +10,13 @@ android {
     applicationId = "com.aistudio.miuiwhitelist.hook"
     minSdk = 24
     targetSdk = 36
-    versionCode = 4
-    versionName = "1.0.3"
+    versionCode = 5
+    versionName = "1.0.4"
   }
 
   signingConfigs {
     create("debugConfig") {
-      val keystoreFile = listOf(
-        file("${rootDir}/keystore.jks"),
-        file("${rootDir}/debug.keystore"),
-        file("keystore.jks"),
-        file("debug.keystore")
-      ).firstOrNull { it.exists() } ?: file("${rootDir}/debug.keystore")
-
-      storeFile = keystoreFile
+      storeFile = file("${rootDir}/debug.keystore")
       storePassword = "android"
       keyAlias = "androiddebugkey"
       keyPassword = "android"
