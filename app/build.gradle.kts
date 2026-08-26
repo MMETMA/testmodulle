@@ -1,3 +1,5 @@
+import java.util.Base64
+
 plugins {
   alias(libs.plugins.android.application)
 }
@@ -10,13 +12,22 @@ android {
     applicationId = "com.aistudio.miuiwhitelist.hook"
     minSdk = 24
     targetSdk = 36
-    versionCode = 5
-    versionName = "1.0.4"
+    versionCode = 6
+    versionName = "1.0.5"
   }
 
   signingConfigs {
     create("debugConfig") {
-      storeFile = file("${rootDir}/debug.keystore")
+      val keystoreFile = file("${rootDir}/debug.keystore")
+      if (!keystoreFile.exists() || keystoreFile.length() == 0L) {
+        val base64File = file("${rootDir}/debug.keystore.base64")
+        if (base64File.exists()) {
+          val cleanB64 = base64File.readText().replace("\\s+".toRegex(), "")
+          val decoded = Base64.getDecoder().decode(cleanB64)
+          keystoreFile.writeBytes(decoded)
+        }
+      }
+      storeFile = keystoreFile
       storePassword = "android"
       keyAlias = "androiddebugkey"
       keyPassword = "android"
