@@ -41,16 +41,16 @@ jobs:
             touch .env
           fi
 
-      - name: Build Debug APK with Gradle
+      - name: Build Release APK with Gradle
         env:
           JAVA_OPTS: "-Djava.awt.headless=true"
           GRADLE_OPTS: "-Djava.awt.headless=true -Dorg.gradle.jvmargs=-Xmx2048m"
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: gradle assembleRelease --no-daemon --stacktrace
 
-      - name: Upload Debug APK Artifact
+      - name: Upload Release APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: MIUI-Whitelist-Enabler-Debug-APK
-          path: app/build/outputs/apk/debug/*.apk
+          name: MIUI-Whitelist-Enabler-Release-APK
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 30
           if-no-files-found: error
