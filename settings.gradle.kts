@@ -24,6 +24,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "MIUI Whitelist Enabler"
+rootProject.name = "Fix Muted Notifications HyperOS"
 
 include(":app")

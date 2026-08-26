@@ -1,6 +1,6 @@
 {
-  "name": "MIUI Whitelist Enabler",
-  "description": "LSPosed module to force NotificationSettingsManager.USE_WHITE_LISTS to always be 0 (false) in MIUI and HyperOS SystemUI.",
+  "name": "Fix Muted Notifications HyperOS",
+  "description": "Fix muted notifications on HyperOS CN rom",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

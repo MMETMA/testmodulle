@@ -14,7 +14,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="Forces MIUI/HyperOS SystemUI NotificationSettingsManager.USE_WHITE_LISTS to always be false (0)." />
+            android:value="Fix muted notifications on HyperOS CN rom" />
         <meta-data
             android:name="xposedminversion"
             android:value="54" />
